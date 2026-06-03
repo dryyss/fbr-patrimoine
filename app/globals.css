@@ -403,13 +403,17 @@ body.nav-locked { overflow: hidden; }
 .nav-drawer-close:hover { background: var(--stone-warm); }
 
 .nav-drawer-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
   list-style: none;
   padding: 16px 0;
   margin: 0;
   flex: 1;
 }
 
-.nav-drawer-list li { padding: 0; }
+.nav-drawer-list li { padding: 0; width: 100%; }
 
 .nav-drawer-list a {
   display: flex;
@@ -422,7 +426,11 @@ body.nav-locked { overflow: hidden; }
   font-weight: 500;
   border-left: 3px solid transparent;
   transition: all 0.2s;
+  letter-spacing: 0;
 }
+
+.nav-drawer-list a::after { display: none !important; }
+.nav-drawer-list a:hover::after { display: none !important; }
 
 .nav-drawer-list a:hover {
   background: var(--stone);

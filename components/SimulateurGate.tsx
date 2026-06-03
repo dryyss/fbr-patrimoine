@@ -46,9 +46,9 @@ export default function SimulateurGate({ children }: { children: React.ReactNode
       <>
         <div className="sim-lead-banner">
           <div>
-            <strong>Bonjour {lead.prenom},</strong> votre simulation est associée à
-            l&apos;adresse <em>{lead.email}</em>. Vous recevrez un récapitulatif par
-            email après chaque génération.
+            <strong>Bonjour {lead.prenom},</strong> à chaque génération, notre
+            équipe sera notifiée avec votre photo et vos coordonnées
+            (<em>{lead.email}</em>) pour vous rappeler sous 48h ouvrées.
           </div>
           <button
             type="button"
@@ -110,8 +110,10 @@ export default function SimulateurGate({ children }: { children: React.ReactNode
         </h2>
         <p>
           Pour utiliser le simulateur, merci de renseigner vos coordonnées.
-          Vous recevrez votre projection par email et nos équipes prendront contact
-          avec vous sous 48h ouvrées pour un diagnostic personnalisé — sans engagement.
+          Dès que vous lancerez votre simulation, notre équipe sera alertée — votre
+          photo et vos informations nous parviendront automatiquement, et nous vous
+          rappellerons sous 48h ouvrées avec un diagnostic personnalisé sur votre
+          projet, sans engagement.
         </p>
       </div>
 

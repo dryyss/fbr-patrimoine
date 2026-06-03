@@ -2632,73 +2632,134 @@ section { padding: 120px 40px; }
   .ba-cta-band { padding: 32px 26px; flex-direction: column; align-items: flex-start; }
 }
 
-/* ==================== SIMULATEUR — gate lead ==================== */
-.sim-gate {
-  background: #fff;
-  border: 1px solid var(--line);
-  padding: 56px 56px;
-  box-shadow: 0 30px 60px rgba(20, 49, 97, 0.08);
+/* ==================== SIMULATEUR — inline form (right column) ==================== */
+.sim-stage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
 }
 
-.sim-gate-head {
-  text-align: center;
-  max-width: 640px;
-  margin: 0 auto 40px;
+.sim-stage-main { min-width: 0; }
+
+.sim-form {
+  position: sticky;
+  top: 110px;
+  background: var(--stone);
+  border-left: 3px solid var(--orange);
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.sim-gate-head h2 {
+.sim-form-head .section-label { color: var(--orange-deep); }
+
+.sim-form-head h3 {
   font-family: var(--font-fraunces), 'Fraunces', serif;
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 500;
   color: var(--blue-dark);
-  letter-spacing: -0.015em;
-  margin: 12px 0 16px;
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 10px 0 12px;
 }
 
-.sim-gate-head h2 em { color: var(--orange-deep); font-style: italic; }
+.sim-form-head h3 em { color: var(--orange-deep); font-style: italic; }
 
-.sim-gate-head p {
-  color: var(--ink-soft);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.sim-gate-form { max-width: 640px; margin: 0 auto; }
-
-.sim-lead-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 18px;
-  background: rgba(30, 77, 140, 0.06);
-  border-left: 3px solid var(--blue);
-  padding: 16px 22px;
-  margin-bottom: 24px;
+.sim-form-head p {
   font-size: 14px;
   color: var(--ink-soft);
-  flex-wrap: wrap;
+  line-height: 1.55;
 }
 
-.sim-lead-banner strong { color: var(--blue-dark); }
-.sim-lead-banner em { color: var(--blue); font-style: normal; font-weight: 500; }
+.sim-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 
-.sim-lead-change {
-  background: transparent;
+.sim-form-grid input { width: 100%; }
+.sim-form-full { grid-column: 1 / -1; }
+
+.sim-form input[type="text"],
+.sim-form input[type="email"],
+.sim-form input[type="tel"] {
+  padding: 13px 14px;
   border: 1px solid var(--line);
-  color: var(--blue-dark);
-  font: inherit;
-  font-size: 13px;
-  padding: 8px 14px;
-  cursor: pointer;
-  transition: all 0.2s;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 2px;
+  transition: border 0.2s;
 }
 
-.sim-lead-change:hover { border-color: var(--blue); color: var(--blue); }
+.sim-form input:focus { outline: none; border-color: var(--blue); }
+
+.sim-form-rgpd {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.sim-form-rgpd input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-top: 3px;
+  accent-color: var(--orange-deep);
+  cursor: pointer;
+}
+
+.sim-form-error {
+  background: #fff3f0;
+  border-left: 3px solid #d63a2a;
+  color: #8a2820;
+  padding: 12px 16px;
+  font-size: 13px;
+  border-radius: 2px;
+}
+
+.sim-form-foot {
+  font-size: 12px;
+  color: var(--ink-mute);
+  line-height: 1.5;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.sim-form-foot strong { color: var(--blue-dark); }
+
+.sim-preview-single {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--stone);
+  margin-bottom: 28px;
+}
+
+.sim-preview-single img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 1000px) {
+  .sim-stage-grid { grid-template-columns: 1fr; gap: 36px; }
+  .sim-form { position: static; }
+}
 
 @media (max-width: 700px) {
-  .sim-gate { padding: 36px 24px; }
-  .sim-gate-head h2 { font-size: 26px; }
+  .sim-form { padding: 28px 24px; }
+  .sim-form-grid { grid-template-columns: 1fr; }
+  .sim-form-full { grid-column: auto; }
 }
 
 /* ==================== SIMULATEUR IA ==================== */
@@ -2824,9 +2885,9 @@ section { padding: 120px 40px; }
 
 .sim-styles {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-top: 30px;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 26px;
 }
 
 .sim-style {

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Simulateur from "@/components/Simulateur";
-import SimulateurGate from "@/components/SimulateurGate";
 
 export const metadata: Metadata = {
   title: "Simulateur avant / après IA · Visualisez votre façade rénovée",
@@ -28,9 +27,7 @@ export default function SimulateurPage() {
           </p>
         </div>
 
-        <SimulateurGate>
-          <Simulateur />
-        </SimulateurGate>
+        <Simulateur />
 
         <div className="sim-trust reveal">
           <div className="sim-trust-item">

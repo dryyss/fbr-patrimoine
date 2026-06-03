@@ -144,12 +144,50 @@ Déjà en place dans le code :
 
 ---
 
-## 7. Checklist de déploiement
+## 7. Emails — Resend (formulaire de contact + simulateur)
+
+Le formulaire de contact et le simulateur IA passent tous les deux par **Resend** (100 emails/jour gratuits, pas de CB demandée).
+
+### 7.1 Créer le compte et vérifier le domaine
+
+1. Compte sur https://resend.com avec le même Google (ou créer un compte dédié).
+2. **Domains → Add Domain → `fbr-patrimoine.com`**.
+3. Resend affiche 3 enregistrements DNS à ajouter dans le registrar du domaine (OVH, Gandi, etc.) :
+   - **SPF** : enregistrement TXT racine
+   - **DKIM** : enregistrement TXT sur un sous-domaine `resend._domainkey`
+   - **DMARC** (recommandé) : enregistrement TXT sur `_dmarc`
+4. Attendre la propagation (~30 min à 24 h). Resend coche le domaine en vert.
+5. **API Keys → Create API Key** → nom `Site Production`, permission **Sending access**, domaine **fbr-patrimoine.com**.
+6. ➡️ Copier la clé `re_xxxxxxxxxxxx` (elle n'est affichée qu'une fois).
+
+### 7.2 Variables Vercel à renseigner
+
+| Variable | Exemple | Rôle |
+|---|---|---|
+| `RESEND_API_KEY` | `re_xxxxxxxxxxxx` | Clé API Resend |
+| `FBR_NOTIFY_TO` | `contact@fbr-patrimoine.com` | Où FBR reçoit les leads |
+| `FBR_NOTIFY_FROM` | `FBR Patrimoine <noreply@fbr-patrimoine.com>` | Expéditeur (doit être sur un domaine vérifié) |
+
+Sans ces variables : le formulaire répond 503 et affiche "Service email temporairement indisponible, appelez-nous au 07 63 20 87 53".
+
+### 7.3 Ce que le code fait
+
+- `app/api/contact/route.ts` reçoit le POST du formulaire, valide les champs (regex email + CP 5 chiffres), filtre les bots (honeypot + rate-limit 5/jour/IP).
+- Envoie en parallèle :
+  - **Email interne à FBR** (template HTML soigné, `reply_to: prospect@email` pour répondre directement)
+  - **Accusé de réception au prospect** (template HTML aux couleurs FBR, `reply_to: contact@fbr-patrimoine.com`)
+- Renvoie 200 OK → ContactForm pousse `generate_lead` dans dataLayer → redirige vers `/contact/merci`.
+
+---
+
+## 8. Checklist de déploiement
 
 Avant de lancer la première campagne Ads :
 
+- [ ] Domaine `fbr-patrimoine.com` vérifié dans Resend (SPF + DKIM + DMARC verts)
+- [ ] Variables `RESEND_API_KEY`, `FBR_NOTIFY_TO`, `FBR_NOTIFY_FROM` renseignées dans Vercel
+- [ ] Test live : remplir le formulaire `/contact` → vérifier que **FBR reçoit l'email** et le **prospect reçoit l'accusé de réception**
 - [ ] Variable `NEXT_PUBLIC_GTM_ID` renseignée dans Vercel
-- [ ] Variable `NEXT_PUBLIC_FORMSPREE_ID` renseignée (sinon le formulaire ne part pas)
 - [ ] Tag GA4 publié dans GTM
 - [ ] Événement `generate_lead` configuré dans GTM avec déclencheur correspondant
 - [ ] Tag Ads Conversion publié dans GTM
@@ -160,7 +198,7 @@ Avant de lancer la première campagne Ads :
 
 ---
 
-## 8. Récap des fichiers code touchés
+## 9. Récap des fichiers code touchés
 
 | Fichier | Rôle |
 |---|---|
@@ -168,7 +206,9 @@ Avant de lancer la première campagne Ads :
 | `components/ConsentDefault.tsx` | Script inline `beforeInteractive` — Consent Mode v2 default + restauration localStorage |
 | `components/CookieBanner.tsx` | Bandeau cookie — pilote le Consent Mode au clic |
 | `components/TrackedContact.tsx` | `<TelLink>` / `<EmailLink>` — wrappers cliquables avec tracking |
-| `components/ContactForm.tsx` | Push `generate_lead` + redirection vers `/contact/merci` |
+| `components/ContactForm.tsx` | POST vers `/api/contact` + push `generate_lead` + redirection vers `/contact/merci` |
+| `app/api/contact/route.ts` | API route Resend — email FBR + accusé prospect + honeypot + rate-limit |
 | `app/layout.tsx` | Injection `<ConsentDefault />` + `<GoogleTagManager />` conditionnelle |
 | `app/contact/merci/page.tsx` | Page de remerciement (cible URL conversion + `noindex`) |
+| `app/devis-ravalement/`, `app/devis-ite/`, `app/devis-renovation-patrimoine/` | Landing pages Ads, basées sur `components/LandingPage.tsx` |
 | `.env.example` | Documentation des variables d'env |

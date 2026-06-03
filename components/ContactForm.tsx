@@ -5,11 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { trackLead } from "@/lib/analytics";
 
-// Replace with your Formspree endpoint (https://formspree.io/forms)
-// Set NEXT_PUBLIC_FORMSPREE_ID in .env.local once the endpoint is created.
-const FORMSPREE_ID =
-  process.env.NEXT_PUBLIC_FORMSPREE_ID ?? "your-form-id";
-
 type Status = "idle" | "submitting" | "error";
 
 type Props = {
@@ -33,10 +28,9 @@ export default function ContactForm({ source = "contact", defaultProject = "" }:
     const data = new FormData(form);
 
     try {
-      const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
         body: data,
-        headers: { Accept: "application/json" },
       });
 
       if (res.ok) {
@@ -49,9 +43,8 @@ export default function ContactForm({ source = "contact", defaultProject = "" }:
         router.push(`/contact/merci?source=${encodeURIComponent(source)}`);
       } else {
         const json = await res.json().catch(() => null);
-        const message = json?.errors?.map((er: { message: string }) => er.message).join(" · ");
         setStatus("error");
-        setErrorMsg(message ?? "Une erreur est survenue. Veuillez réessayer.");
+        setErrorMsg(json?.error ?? "Une erreur est survenue. Veuillez réessayer.");
       }
     } catch {
       setStatus("error");
@@ -118,6 +111,16 @@ export default function ContactForm({ source = "contact", defaultProject = "" }:
       />
 
       <input type="hidden" name="lead_source" value={source} />
+
+      {/* Honeypot — invisible field; bots fill it, humans don't. */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+        aria-hidden="true"
+      />
 
       <label
         style={{

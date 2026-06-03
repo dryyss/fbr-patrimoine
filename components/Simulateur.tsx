@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { readLead } from "./SimulateurGate";
 
 type Style = {
   id: string;
@@ -34,8 +33,27 @@ const styles: Style[] = [
 ];
 
 const MAX_SIZE = 8 * 1024 * 1024; // 8 MB
+const LEAD_KEY = "fbr-sim-lead";
 
 type Phase = "upload" | "style" | "generating" | "result" | "error";
+
+type Lead = {
+  prenom: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  ville: string;
+  cp: string;
+};
+
+const emptyLead: Lead = {
+  prenom: "",
+  nom: "",
+  email: "",
+  telephone: "",
+  ville: "",
+  cp: "",
+};
 
 export default function Simulateur() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +64,21 @@ export default function Simulateur() {
   const [style, setStyle] = useState<string>("chaux");
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
+
+  // Lead form (visible alongside the simulator from the start)
+  const [lead, setLead] = useState<Lead>(emptyLead);
+  const [rgpd, setRgpd] = useState(false);
+  const [leadErr, setLeadErr] = useState<string>("");
+
+  // Pre-fill from sessionStorage so the form persists across reloads / step changes
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(LEAD_KEY);
+      if (raw) setLead({ ...emptyLead, ...(JSON.parse(raw) as Partial<Lead>) });
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const onFile = (f: File | undefined) => {
     if (!f) return;
@@ -80,8 +113,35 @@ export default function Simulateur() {
     setError("");
   };
 
+  const setLeadField = <K extends keyof Lead>(k: K, v: Lead[K]) => {
+    setLead((prev) => ({ ...prev, [k]: v }));
+  };
+
+  const validateLead = (): boolean => {
+    setLeadErr("");
+    if (!lead.prenom.trim() || !lead.nom.trim() || !lead.email.trim() || !lead.telephone.trim() || !lead.ville.trim()) {
+      setLeadErr("Merci de compléter tous les champs marqués d'un *.");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim())) {
+      setLeadErr("L'adresse email ne semble pas valide.");
+      return false;
+    }
+    if (!rgpd) {
+      setLeadErr("Merci d'accepter le traitement de vos données pour continuer.");
+      return false;
+    }
+    return true;
+  };
+
   const generate = async () => {
-    if (!file) return;
+    if (!file) {
+      setLeadErr("Merci d'ajouter une photo de votre façade avant de lancer la simulation.");
+      return;
+    }
+    if (!validateLead()) return;
+
+    sessionStorage.setItem(LEAD_KEY, JSON.stringify(lead));
     setPhase("generating");
     setError("");
 
@@ -89,16 +149,12 @@ export default function Simulateur() {
       const fd = new FormData();
       fd.append("image", file);
       fd.append("style", style);
-
-      const lead = readLead();
-      if (lead) {
-        fd.append("lead_prenom", lead.prenom);
-        fd.append("lead_nom", lead.nom);
-        fd.append("lead_email", lead.email);
-        fd.append("lead_telephone", lead.telephone);
-        fd.append("lead_ville", lead.ville);
-        if (lead.cp) fd.append("lead_cp", lead.cp);
-      }
+      fd.append("lead_prenom", lead.prenom.trim());
+      fd.append("lead_nom", lead.nom.trim());
+      fd.append("lead_email", lead.email.trim());
+      fd.append("lead_telephone", lead.telephone.trim());
+      fd.append("lead_ville", lead.ville.trim());
+      if (lead.cp.trim()) fd.append("lead_cp", lead.cp.trim());
 
       const res = await fetch("/api/simulator", { method: "POST", body: fd });
       const json = await res.json();
@@ -109,7 +165,7 @@ export default function Simulateur() {
         return;
       }
 
-      setResult(json.result ?? preview); // fallback to original if stubbed
+      setResult(json.result ?? preview);
       setPhase("result");
     } catch {
       setError("Impossible de joindre le simulateur. Vérifiez votre connexion.");
@@ -126,8 +182,103 @@ export default function Simulateur() {
     return "sim-step";
   };
 
-  return (
-    <div className="sim-stage">
+  // ===== form fields (shared block, used in the right column) =====
+  const formBlock = (
+    <aside className="sim-form">
+      <div className="sim-form-head">
+        <div className="section-label">Vos coordonnées</div>
+        <h3>
+          Pour recevoir un <em>rappel personnalisé</em>.
+        </h3>
+        <p>
+          Dès que vous lancez la simulation, notre équipe est notifiée et vous
+          rappelle sous 48h ouvrées pour affiner votre projet — sans engagement.
+        </p>
+      </div>
+
+      <div className="sim-form-grid">
+        <input
+          type="text"
+          placeholder="Prénom *"
+          value={lead.prenom}
+          onChange={(e) => setLeadField("prenom", e.target.value)}
+          autoComplete="given-name"
+        />
+        <input
+          type="text"
+          placeholder="Nom *"
+          value={lead.nom}
+          onChange={(e) => setLeadField("nom", e.target.value)}
+          autoComplete="family-name"
+        />
+        <input
+          type="email"
+          placeholder="Adresse email *"
+          value={lead.email}
+          onChange={(e) => setLeadField("email", e.target.value)}
+          autoComplete="email"
+          className="sim-form-full"
+        />
+        <input
+          type="tel"
+          placeholder="Téléphone *"
+          value={lead.telephone}
+          onChange={(e) => setLeadField("telephone", e.target.value)}
+          autoComplete="tel"
+        />
+        <input
+          type="text"
+          placeholder="CP"
+          value={lead.cp}
+          onChange={(e) => setLeadField("cp", e.target.value.replace(/\D/g, "").slice(0, 5))}
+          autoComplete="postal-code"
+          inputMode="numeric"
+        />
+        <input
+          type="text"
+          placeholder="Ville du chantier *"
+          value={lead.ville}
+          onChange={(e) => setLeadField("ville", e.target.value)}
+          autoComplete="address-level2"
+          className="sim-form-full"
+        />
+      </div>
+
+      <label className="sim-form-rgpd">
+        <input
+          type="checkbox"
+          checked={rgpd}
+          onChange={(e) => setRgpd(e.target.checked)}
+        />
+        <span>
+          J&apos;accepte que mes données et la photo téléversée soient transmises à
+          FBR Patrimoine pour le suivi de ma demande, conformément à la{" "}
+          <Link
+            href="/politique-confidentialite"
+            style={{ color: "var(--orange-deep)", textDecoration: "underline" }}
+          >
+            politique de confidentialité
+          </Link>
+          . *
+        </span>
+      </label>
+
+      {leadErr && (
+        <div className="sim-form-error" role="alert">
+          {leadErr}
+        </div>
+      )}
+
+      <p className="sim-form-foot">
+        <strong>Vos données sont sécurisées.</strong> Jamais transmises à des
+        tiers et supprimées dans les 24h suivant la dernière génération.
+      </p>
+    </aside>
+  );
+
+  // ===== left column content (depends on phase) =====
+  const stageBlock = (
+    <div className="sim-stage-main">
       <div className="sim-steps">
         <div className={stepClass("upload")}>
           <div className="sim-step-num">1</div>
@@ -168,7 +319,7 @@ export default function Simulateur() {
             >
               Choisir une photo
             </button>
-            <small>JPG, PNG ou WebP · max 8 Mo · vos images ne sont jamais partagées</small>
+            <small>JPG, PNG ou WebP · max 8 Mo</small>
           </div>
           <input
             ref={inputRef}
@@ -183,23 +334,10 @@ export default function Simulateur() {
       {/* ==================== STYLE SELECTION ==================== */}
       {phase === "style" && preview && (
         <>
-          <div className="sim-preview">
-            <div className="sim-preview-cell">
-              <span className="sim-preview-label">Votre photo</span>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Photo de la façade à rénover" />
-            </div>
-            <div className="sim-preview-cell" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 40, textAlign: "center", color: "var(--ink-mute)" }}>
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" style={{ marginBottom: 14, opacity: 0.4 }}>
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 3" />
-              </svg>
-              <div style={{ fontSize: 14 }}>
-                Sélectionnez un style ci-dessous
-                <br />
-                puis lancez la génération.
-              </div>
-            </div>
+          <div className="sim-preview-single">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={preview} alt="Photo de la façade à rénover" />
+            <span className="sim-preview-label">Votre photo</span>
           </div>
 
           <div className="sim-styles">
@@ -224,7 +362,7 @@ export default function Simulateur() {
               Changer de photo
             </button>
             <button type="button" className="btn-primary" onClick={generate}>
-              Générer l&apos;aperçu
+              Lancer la simulation
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -274,11 +412,10 @@ export default function Simulateur() {
 
           <div className="sim-disclaimer">
             <strong>Aperçu indicatif non contractuel.</strong> Cette visualisation
-            est générée par intelligence artificielle à partir de votre photo et du
-            style choisi. Le rendu réel dépendra de l&apos;état du support, des
-            matériaux retenus et des contraintes techniques du chantier — nos
-            équipes vous établiront un projet précis lors du diagnostic gratuit
-            sur site.
+            est générée par intelligence artificielle. Le rendu réel dépendra de
+            l&apos;état du support, des matériaux retenus et des contraintes
+            techniques du chantier — nos équipes vous établiront un projet précis
+            lors du diagnostic gratuit sur site.
           </div>
 
           <div className="sim-actions">
@@ -312,6 +449,15 @@ export default function Simulateur() {
           </div>
         </>
       )}
+    </div>
+  );
+
+  return (
+    <div className="sim-stage">
+      <div className="sim-stage-grid">
+        {stageBlock}
+        {formBlock}
+      </div>
     </div>
   );
 }

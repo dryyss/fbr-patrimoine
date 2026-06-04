@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkFacade } from "@/lib/simulator/vision";
+import { getRulesFor } from "@/lib/simulator/rules";
+import { composePrompt } from "@/lib/simulator/prompt";
+import { refinePromptViaGemini } from "@/lib/simulator/gemini";
+import { generateFacadeImage } from "@/lib/simulator/gemini-image";
+import { checkIpLimit, checkMonthlyLimit, rateLimitBackend } from "@/lib/simulator/rate-limit";
+import type { Intensity, StyleId } from "@/lib/simulator/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// La génération Gemini Image peut prendre 10–20 s. On laisse 60 s pour
+// absorber les pics ; au-delà, on renvoie un timeout propre.
+export const maxDuration = 60;
 
-const MAX_PER_DAY_PER_IP = 3;
-const MAX_PER_MONTH_GLOBAL = 500;
 const MAX_BYTES = 8 * 1024 * 1024;
-
-// In-memory rate-limit store. Single-instance only — works for the MVP on a
-// single Vercel region with no autoscaling. Before going to multi-region or
-// scaling out, swap this for @upstash/ratelimit + Redis.
-type IpBucket = { count: number; resetAt: number };
-const ipBuckets = new Map<string, IpBucket>();
-let monthlyCount = 0;
-let monthlyResetAt = nextMonthMs();
-
-function nextMonthMs() {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-}
+const VALID_STYLES: StyleId[] = ["chaux", "moderne", "ite", "ite-enduit"];
+const VALID_INTENSITIES: Intensity[] = [1, 2, 3];
 
 function getIp(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
@@ -26,47 +23,8 @@ function getIp(req: NextRequest): string {
   return req.headers.get("x-real-ip") ?? "unknown";
 }
 
-function tooManyForIp(ip: string): boolean {
-  const now = Date.now();
-  const bucket = ipBuckets.get(ip);
-  const tomorrow = new Date();
-  tomorrow.setHours(24, 0, 0, 0);
-
-  if (!bucket || bucket.resetAt < now) {
-    ipBuckets.set(ip, { count: 1, resetAt: tomorrow.getTime() });
-    return false;
-  }
-  if (bucket.count >= MAX_PER_DAY_PER_IP) return true;
-  bucket.count += 1;
-  return false;
-}
-
-function tooManyGlobally(): boolean {
-  const now = Date.now();
-  if (monthlyResetAt < now) {
-    monthlyCount = 0;
-    monthlyResetAt = nextMonthMs();
-  }
-  if (monthlyCount >= MAX_PER_MONTH_GLOBAL) return true;
-  monthlyCount += 1;
-  return false;
-}
-
 export async function POST(req: NextRequest) {
   const ip = getIp(req);
-
-  if (tooManyGlobally()) {
-    return NextResponse.json(
-      { error: "Le simulateur est très sollicité ce mois-ci. Réessayez le mois prochain ou demandez un devis directement." },
-      { status: 429 }
-    );
-  }
-  if (tooManyForIp(ip)) {
-    return NextResponse.json(
-      { error: "Vous avez atteint la limite de 3 générations par jour. Revenez demain ou contactez-nous." },
-      { status: 429 }
-    );
-  }
 
   let form: FormData;
   try {
@@ -76,19 +34,73 @@ export async function POST(req: NextRequest) {
   }
 
   const file = form.get("image");
-  const style = form.get("style");
+  const styleRaw = String(form.get("style") ?? "");
+  const intensityRaw = parseInt(String(form.get("intensity") ?? "2"), 10);
+  const description = String(form.get("description") ?? "").trim().slice(0, 500);
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Aucune image n'a été reçue." }, { status: 400 });
   }
-  if (typeof style !== "string" || !style) {
-    return NextResponse.json({ error: "Style manquant." }, { status: 400 });
+  if (!VALID_STYLES.includes(styleRaw as StyleId)) {
+    return NextResponse.json({ error: "Style invalide." }, { status: 400 });
+  }
+  if (!VALID_INTENSITIES.includes(intensityRaw as Intensity)) {
+    return NextResponse.json({ error: "Intensité invalide." }, { status: 400 });
   }
   if (!file.type.startsWith("image/")) {
     return NextResponse.json({ error: "Le fichier doit être une image." }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: "Image trop lourde (max 8 Mo)." }, { status: 413 });
+  }
+
+  const style = styleRaw as StyleId;
+  const intensity = intensityRaw as Intensity;
+  const isDemo = process.env.SIMULATOR_DEMO === "true";
+
+  // ---------- 1. VISION CHECK (server-side, do not trust front) ----------
+  const vision = await checkFacade(file);
+  if (!vision.is_facade) {
+    return NextResponse.json(
+      {
+        error:
+          vision.rejection_reason ??
+          "Cette image ne semble pas montrer une façade exploitable. Réessayez avec une photo de votre bâtiment vu de l'extérieur.",
+        vision,
+      },
+      { status: 422 }
+    );
+  }
+
+  // ---------- 2. Vérifier que le style est compatible avec le bâti ----------
+  const rules = getRulesFor(vision.building_type);
+  if (!rules.allowedStyles.includes(style)) {
+    const blocked = rules.blockedStyles.find((b) => b.id === style);
+    return NextResponse.json(
+      {
+        error:
+          blocked?.reason ??
+          "Le style choisi n'est pas compatible avec ce type de bâtiment.",
+        vision,
+      },
+      { status: 422 }
+    );
+  }
+
+  // ---------- 3. Rate-limit (Upstash si configuré, sinon mémoire) ----------
+  const monthly = await checkMonthlyLimit();
+  if (!monthly.ok) {
+    return NextResponse.json(
+      { error: "Le simulateur est très sollicité ce mois-ci. Réessayez le mois prochain ou demandez un devis directement." },
+      { status: 429 }
+    );
+  }
+  const ipLimit = await checkIpLimit(ip);
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: "Vous avez atteint la limite quotidienne de générations. Revenez demain ou contactez-nous." },
+      { status: 429 }
+    );
   }
 
   const lead = {
@@ -100,125 +112,78 @@ export async function POST(req: NextRequest) {
     cp: String(form.get("lead_cp") ?? ""),
   };
 
-  // Fire-and-forget notification email to FBR (does NOT block the generation).
-  notifyFbr(file, lead, style, ip).catch((e) => {
+  // ---------- 4. Raffinage Gemini de la description (best-effort, 5s max) ----------
+  const refinedDescription = description
+    ? await refinePromptViaGemini(description, style, vision.building_type)
+    : null;
+  const promptDescription = refinedDescription ?? description;
+
+  // ---------- 5. Compose le prompt enrichi par la vision ----------
+  const { prompt, negative_prompt } = composePrompt(vision, style, intensity, promptDescription);
+
+  // ---------- 6. Notif FBR en fire-and-forget ----------
+  notifyFbr(file, lead, style, intensity, vision, description, ip).catch((e) => {
     console.error("notifyFbr failed:", e);
   });
 
-  const replicateToken = process.env.REPLICATE_API_TOKEN;
-
-  // ---------- STUB MODE (no API key yet) ----------
-  // Renvoie l'image originale en data URL après un faux délai. Permet de tester
-  // toute la UX bout-en-bout sans coût. Quand REPLICATE_API_TOKEN sera défini
-  // dans Vercel, la branche réelle ci-dessous prend le relais.
-  if (!replicateToken) {
+  // ---------- 7. GÉNÉRATION ----------
+  // Mode démo explicite (SIMULATOR_DEMO=true) OU absence de clé Gemini :
+  // on renvoie l'image originale après un faux délai pour valider la UX
+  // bout-en-bout sans coût.
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (isDemo || !apiKey) {
     await new Promise((r) => setTimeout(r, 2200));
     const buf = Buffer.from(await file.arrayBuffer());
     const dataUrl = `data:${file.type};base64,${buf.toString("base64")}`;
     return NextResponse.json({
       result: dataUrl,
       stubbed: true,
+      reason: isDemo ? "demo_mode" : "no_gemini_key",
       style,
-      note: "STUB — la clé REPLICATE_API_TOKEN n'est pas configurée. Réponse = image originale.",
+      intensity,
+      vision,
+      prompt,
+      negative_prompt,
+      description_raw: description || null,
+      description_refined: refinedDescription,
+      rate_limit_backend: rateLimitBackend(),
+      note: isDemo
+        ? "STUB — SIMULATOR_DEMO=true. Réponse = image originale."
+        : "STUB — GEMINI_API_KEY non configurée. Réponse = image originale.",
     });
   }
 
-  // ---------- REAL MODE (Replicate SDXL + ControlNet) ----------
-  try {
-    const buf = Buffer.from(await file.arrayBuffer());
-    const inputDataUrl = `data:${file.type};base64,${buf.toString("base64")}`;
-    const prompt = buildPrompt(style);
-
-    // SDXL + ControlNet (canny) — façade-aware via control. Le slug exact peut
-    // être ajusté quand on aura testé : jagilley/controlnet-canny pour SD 1.5,
-    // ou un modèle Flux/Photo SDXL plus récent.
-    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${replicateToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        version: "9e6e0d3df6f6b7e8a4c5cdb8a85f0c1f2e3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c", // TODO: remplacer par la version pinnée du modèle choisi
-        input: {
-          image: inputDataUrl,
-          prompt,
-          negative_prompt:
-            "people, cars, vehicles, blurry, low quality, distorted, text, watermark, logo",
-          num_inference_steps: 30,
-          guidance_scale: 7,
-        },
-      }),
-    });
-
-    if (!createRes.ok) {
-      const txt = await createRes.text();
-      console.error("Replicate create error:", txt);
-      return NextResponse.json(
-        { error: "Le service IA est temporairement indisponible. Réessayez dans un instant." },
-        { status: 502 }
-      );
-    }
-
-    const created = await createRes.json();
-    const pollUrl = created.urls?.get;
-    if (!pollUrl) {
-      return NextResponse.json({ error: "Réponse IA invalide." }, { status: 502 });
-    }
-
-    // Poll jusqu'à 60 s
-    const start = Date.now();
-    while (Date.now() - start < 60_000) {
-      await new Promise((r) => setTimeout(r, 1500));
-      const pollRes = await fetch(pollUrl, {
-        headers: { Authorization: `Bearer ${replicateToken}` },
-      });
-      const poll = await pollRes.json();
-      if (poll.status === "succeeded") {
-        const url = Array.isArray(poll.output) ? poll.output[poll.output.length - 1] : poll.output;
-        return NextResponse.json({ result: url, style, stubbed: false });
-      }
-      if (poll.status === "failed" || poll.status === "canceled") {
-        return NextResponse.json(
-          { error: "La génération a échoué. Réessayez avec une autre photo." },
-          { status: 502 }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: "Délai dépassé. Réessayez dans un instant." },
-      { status: 504 }
-    );
-  } catch (err) {
-    console.error("Simulator route error:", err);
-    return NextResponse.json(
-      { error: "Une erreur inattendue est survenue côté serveur." },
-      { status: 500 }
-    );
+  // ---------- 8. Mode réel — Gemini 2.5 Flash Image ----------
+  const gen = await generateFacadeImage(file, prompt, negative_prompt);
+  if (!gen.ok) {
+    return NextResponse.json({ error: gen.error }, { status: 502 });
   }
+
+  return NextResponse.json({
+    result: gen.dataUrl,
+    stubbed: false,
+    style,
+    intensity,
+    vision,
+  });
 }
 
 /**
- * Send a notification email to FBR with the lead info + uploaded photo.
- * - Real mode: uses Resend (RESEND_API_KEY required). The photo goes as
- *   attachment, the lead info is in the body.
- * - Stub mode: just logs to the server console — no crash if no key.
- *
- * Required env vars for real mode (set in Vercel):
- *   RESEND_API_KEY        — your Resend API key
- *   FBR_NOTIFY_TO         — destination address (e.g. contact@fbr-patrimoine.com)
- *   FBR_NOTIFY_FROM       — verified sender (e.g. "Simulateur FBR <noreply@fbr-patrimoine.com>")
+ * Notification email vers FBR (Resend) avec photo en pièce jointe + résultat
+ * de la vision pour pré-qualifier le lead.
  */
 async function notifyFbr(
   file: File,
   lead: { prenom: string; nom: string; email: string; telephone: string; ville: string; cp: string },
   styleId: string,
+  intensity: number,
+  vision: Awaited<ReturnType<typeof checkFacade>>,
+  description: string,
   ip: string
 ) {
-  const key = process.env.RESEND_API_KEY;
-  const to = process.env.FBR_NOTIFY_TO;
-  const from = process.env.FBR_NOTIFY_FROM;
+  const key = process.env.RESEND_API_KEY?.trim();
+  const to = process.env.FBR_NOTIFY_TO?.trim();
+  const from = process.env.FBR_NOTIFY_FROM?.trim();
 
   const subject = `Nouveau lead Simulateur — ${lead.prenom || "?"} ${lead.nom || "?"} (${lead.ville || "?"})`;
   const html = `
@@ -230,10 +195,22 @@ async function notifyFbr(
       <tr><td><b>Email</b></td><td><a href="mailto:${escapeHtml(lead.email)}">${escapeHtml(lead.email)}</a></td></tr>
       <tr><td><b>Téléphone</b></td><td><a href="tel:${escapeHtml(lead.telephone)}">${escapeHtml(lead.telephone)}</a></td></tr>
       <tr><td><b>Ville</b></td><td>${escapeHtml(lead.ville)}${lead.cp ? ` (${escapeHtml(lead.cp)})` : ""}</td></tr>
-      <tr><td><b>Style demandé</b></td><td>${escapeHtml(styleId)}</td></tr>
+      <tr><td><b>Style demandé</b></td><td>${escapeHtml(styleId)} · intensité ${intensity}/3</td></tr>
+      <tr><td colspan="2" style="padding-top:14px"><b>Pré-qualification IA</b></td></tr>
+      <tr><td><b>Type de bâti</b></td><td>${escapeHtml(vision.building_type)}</td></tr>
+      <tr><td><b>Époque</b></td><td>${escapeHtml(vision.estimated_era ?? "?")}</td></tr>
+      <tr><td><b>Matériau apparent</b></td><td>${escapeHtml(vision.current_material ?? "?")}</td></tr>
+      <tr><td><b>État</b></td><td>${escapeHtml(vision.current_state ?? "?")}</td></tr>
+      <tr><td><b>Protégé probable</b></td><td>${vision.protected_likely ? "Oui" : "Non / inconnu"}</td></tr>
       <tr><td><b>IP</b></td><td>${escapeHtml(ip)}</td></tr>
       <tr><td><b>Date</b></td><td>${new Date().toLocaleString("fr-FR")}</td></tr>
     </table>
+    ${
+      description
+        ? `<h3 style="margin-top:20px;font-family:Georgia,serif;color:#0c1f42">Précisions du visiteur</h3>
+           <div style="background:#f8f4ec;padding:14px 18px;border-left:3px solid #d97a3a;white-space:pre-wrap;font-family:Arial,sans-serif;font-size:14px;color:#0c1f42">${escapeHtml(description)}</div>`
+        : ""
+    }
     <p style="color:#7a8294;font-size:12px;margin-top:24px">
       La photo de la façade est jointe à cet email. Recontactez la personne sous
       48h ouvrées pour transformer le lead.
@@ -245,6 +222,9 @@ async function notifyFbr(
       subject,
       lead,
       styleId,
+      intensity,
+      vision,
+      description,
       fileBytes: file.size,
     });
     return;
@@ -266,9 +246,7 @@ async function notifyFbr(
       reply_to: lead.email || undefined,
       subject,
       html,
-      attachments: [
-        { filename, content: buf.toString("base64") },
-      ],
+      attachments: [{ filename, content: buf.toString("base64") }],
     }),
   });
 
@@ -285,18 +263,4 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function buildPrompt(styleId: string): string {
-  const map: Record<string, string> = {
-    chaux:
-      "the same building facade, freshly renovated with traditional lime plaster (enduit à la chaux) in warm cream tones, restored haussmannian details, clean stonework, soft natural daylight, architectural photography, photorealistic, high detail, sharp focus",
-    moderne:
-      "the same building facade, fully renovated with smooth modern mineral plaster in light neutral tones, contemporary clean finish, restored balconies and windows, natural daylight, architectural photography, photorealistic, high detail",
-    ite:
-      "the same building facade, retrofitted with exterior wood cladding for thermal insulation (ITE bardage bois), vertical wood panels in warm natural tones, contemporary look, restored window frames, natural daylight, architectural photography, photorealistic",
-    "ite-enduit":
-      "the same building facade, retrofitted with external thermal insulation finished with smooth tinted mineral plaster, clean modern envelope, restored joinery, natural daylight, architectural photography, photorealistic, high detail",
-  };
-  return map[styleId] ?? map.chaux;
 }

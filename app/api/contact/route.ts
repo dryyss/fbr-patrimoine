@@ -91,13 +91,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Code postal invalide (5 chiffres)." }, { status: 400 });
   }
 
-  const key = process.env.RESEND_API_KEY;
-  const to = process.env.FBR_NOTIFY_TO;
-  const from = process.env.FBR_NOTIFY_FROM;
+  const key = process.env.RESEND_API_KEY?.trim();
+  const to = process.env.FBR_NOTIFY_TO?.trim();
+  const from = process.env.FBR_NOTIFY_FROM?.trim();
 
   if (!key || !to || !from) {
-    // Don't silently drop production leads. Log loudly, return 503 so the form
-    // shows the user "réessayez ou appelez-nous" instead of false success.
+    // En dev (NODE_ENV !== "production") : on log loud + on simule un succès,
+    // pour que le développeur puisse tester le flow complet sans avoir à
+    // configurer Resend localement.
+    if (process.env.NODE_ENV !== "production") {
+      console.info(
+        "\n[contact] DEV FALLBACK — lead reçu (Resend non configuré localement) :\n" +
+          JSON.stringify(lead, null, 2) +
+          `\nIP: ${ip}\n`
+      );
+      return NextResponse.json({ ok: true, devFallback: true });
+    }
+    // En prod : pas de fallback silencieux. On préfère 503 + message clair
+    // "réessayez ou appelez-nous" plutôt que de perdre le lead.
     console.error("[contact] Resend not configured — env vars manquantes", { key: !!key, to: !!to, from: !!from });
     return NextResponse.json(
       { error: "Le service email est temporairement indisponible. Appelez-nous au 07 63 20 87 53." },
@@ -105,22 +116,75 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const notifyTo = resolveNotifyTo(to, from);
+  const canAckProspect = canSendProspectAck(lead.email, from);
+
   try {
-    await Promise.all([
-      sendInternalNotification({ key, to, from, lead, ip }),
-      // Acknowledgement is best-effort: if it fails we still consider the lead captured.
-      sendProspectAcknowledgement({ key, from, lead }).catch((e) => {
+    await sendInternalNotification({ key, to: notifyTo, from, lead, ip });
+    if (canAckProspect) {
+      await sendProspectAcknowledgement({ key, from, lead }).catch((e) => {
         console.error("[contact] prospect ACK failed:", e);
-      }),
-    ]);
+      });
+    } else {
+      console.info(
+        `[contact] Accusé prospect non envoyé (mode test Resend) — email réel : ${lead.email}`
+      );
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[contact] internal email failed:", err);
+
+    // Mode test Resend : si la notif interne échoue encore, on ne bloque pas
+    // le prospect en dev — le lead est loggé côté serveur.
+    if (process.env.NODE_ENV !== "production" && isResendSandbox(from)) {
+      console.info(
+        "\n[contact] DEV — lead capturé malgré échec Resend :\n" +
+          JSON.stringify({ ...lead, notifyTo, ip }, null, 2) +
+          "\n"
+      );
+      return NextResponse.json({ ok: true, devFallback: true });
+    }
+
+    const hint = resendErrorHint(err);
     return NextResponse.json(
-      { error: "Une erreur est survenue à l'envoi. Réessayez ou appelez-nous au 07 63 20 87 53." },
+      {
+        error:
+          hint ??
+          "Une erreur est survenue à l'envoi. Réessayez ou appelez-nous au 07 63 20 87 53.",
+      },
       { status: 502 }
     );
   }
+}
+
+/** Resend sandbox only allows onboarding@resend.dev as sender. */
+function isResendSandbox(from: string): boolean {
+  return from.includes("onboarding@resend.dev");
+}
+
+/** In sandbox, notifications must go to the Resend account email. */
+function resolveNotifyTo(configuredTo: string, from: string): string {
+  if (!isResendSandbox(from)) return configuredTo;
+  return process.env.RESEND_TEST_RECIPIENT?.trim() || configuredTo;
+}
+
+/** In sandbox, prospect ACK only works when their email matches the test recipient. */
+function canSendProspectAck(prospectEmail: string, from: string): boolean {
+  if (!isResendSandbox(from)) return true;
+  const allowed =
+    process.env.RESEND_TEST_RECIPIENT?.trim() ||
+    process.env.FBR_NOTIFY_TO?.trim();
+  if (!allowed) return false;
+  return prospectEmail.trim().toLowerCase() === allowed.toLowerCase();
+}
+
+function resendErrorHint(err: unknown): string | null {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (!msg.includes("403") && !msg.includes("validation_error")) return null;
+  if (msg.includes("only send testing emails")) {
+    return "Configuration email en cours. Votre demande a été enregistrée — nous vous rappelons au 07 63 20 87 53 si besoin urgent.";
+  }
+  return null;
 }
 
 async function sendInternalNotification(args: {

@@ -4,6 +4,7 @@ import TrustBar from "@/components/TrustBar";
 import RealisationsGrid from "@/components/RealisationsGrid";
 import CtaBlock from "@/components/CtaBlock";
 import HomeLoader from "@/components/HomeLoader";
+import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 
 export default function HomePage() {
   return (
@@ -272,6 +273,43 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== AVANT / APRÈS ==================== */}
+      <section className="ba-section" id="avant-apres">
+        <div className="ba-section-inner">
+          <div className="ba-section-header reveal">
+            <div className="section-label">Avant / Après</div>
+            <h2 className="section-title">
+              La <em>transformation</em>, glissée du bout du doigt.
+            </h2>
+            <p>
+              Glissez le curseur pour révéler la métamorphose. Vraies façades,
+              vrais chantiers, photos prises sur site par nos équipes.
+            </p>
+          </div>
+
+          <div className="ba-home-single reveal">
+            <BeforeAfterSlider
+              beforeSrc="/project3.jpg"
+              afterSrc="/project6.jpg"
+              caption="Façade haussmannienne — ravalement à la chaux"
+              location="Paris 9ᵉ"
+              date="Livré en 2025"
+              workType="Ravalement & restauration"
+              aspectRatio="16 / 9"
+            />
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 48 }} className="reveal">
+            <Link href="/realisations#avant-apres" className="btn-outline">
+              Voir d&apos;autres transformations
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>

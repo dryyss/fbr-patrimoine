@@ -198,7 +198,56 @@ Avant de lancer la première campagne Ads :
 
 ---
 
-## 9. Récap des fichiers code touchés
+## 9. Simulateur IA — Gemini 2.5 Flash Image + Upstash
+
+Le simulateur de façade utilise **Gemini 2.5 Flash Image** ("Nano Banana") pour l'édition image-to-image, et **Upstash Redis** pour le rate-limit persistant en production.
+
+### 9.1 Gemini
+
+1. Aller sur https://aistudio.google.com/apikey et créer une clé API (compte Google `andrys.developper@gmail.com`).
+2. Coller dans Vercel comme `GEMINI_API_KEY`.
+
+Tarif estimé : ~0,04 € par génération d'image, ~0,001 € par validation vision et par raffinage de prompt. À 100 simulations/mois, compter ~4–5 € de coût Gemini.
+
+Tant que `GEMINI_API_KEY` est vide, le simulateur tourne en **mode stub** (renvoie l'image originale après ~2 s) — pratique pour valider la UX sans coût.
+
+Pour forcer le stub même avec une clé en place (démo commerciale à Hafedh par exemple) : `SIMULATOR_DEMO=true`.
+
+### 9.2 Upstash Redis (rate-limit persistant)
+
+**Indispensable en production** sur Vercel. Sans Upstash, les compteurs sont en mémoire et **se perdent à chaque cold start serverless** — le plafond mensuel ne tient pas.
+
+1. Compte sur https://console.upstash.com (gratuit, 10k commandes/jour offertes).
+2. **Create Database → Type Regional → Region Frankfurt** (le plus proche de la France).
+3. Onglet **REST API** → copier `UPSTASH_REDIS_REST_URL` et `UPSTASH_REDIS_REST_TOKEN`.
+4. Coller dans Vercel + redéployer.
+
+Le code détecte automatiquement la présence des deux variables : si elles sont là, il bascule sur Upstash ; sinon, fallback en mémoire (dev local, démo offline).
+
+### 9.3 Variables Vercel à renseigner
+
+| Variable | Exemple | Rôle |
+|---|---|---|
+| `GEMINI_API_KEY` | `AQ.Ab8R...` | Génération image + vision + raffinage prompt |
+| `SIMULATOR_DEMO` | `false` | Force le mode stub (démo sans coût) |
+| `SIMULATOR_DAILY_IP_CAP` | `3` | Max simulations/jour/IP |
+| `SIMULATOR_MONTHLY_CAP` | `500` | Max simulations/mois (global) |
+| `UPSTASH_REDIS_REST_URL` | `https://xxx.upstash.io` | URL REST du Redis |
+| `UPSTASH_REDIS_REST_TOKEN` | `AYxxx...` | Token d'auth Upstash |
+
+### 9.4 Mode dégradé / debug
+
+La réponse JSON du simulateur en mode stub expose désormais :
+- `stubbed: true` + `reason: "demo_mode" | "no_gemini_key"`
+- Le `prompt` complet qui aurait été envoyé à Gemini Image
+- `description_raw` (texte français brut du visiteur) et `description_refined` (clause anglaise raffinée par Gemini 2.5 Flash texte)
+- `rate_limit_backend: "upstash" | "memory"` pour vérifier que la prod tape bien Upstash
+
+Ouvrir DevTools → Network → réponse `/api/simulator` pour tout inspecter.
+
+---
+
+## 10. Récap des fichiers code touchés
 
 | Fichier | Rôle |
 |---|---|
@@ -211,4 +260,9 @@ Avant de lancer la première campagne Ads :
 | `app/layout.tsx` | Injection `<ConsentDefault />` + `<GoogleTagManager />` conditionnelle |
 | `app/contact/merci/page.tsx` | Page de remerciement (cible URL conversion + `noindex`) |
 | `app/devis-ravalement/`, `app/devis-ite/`, `app/devis-renovation-patrimoine/` | Landing pages Ads, basées sur `components/LandingPage.tsx` |
+| `lib/simulator/gemini.ts` | Raffinage de la description visiteur via Gemini 2.5 Flash texte |
+| `lib/simulator/gemini-image.ts` | Génération image-to-image via Gemini 2.5 Flash Image |
+| `lib/simulator/rate-limit.ts` | Caps anti-abus, Upstash en prod / mémoire en fallback |
+| `lib/simulator/{vision,rules,prompt,types}.ts` | Pipeline vision + règles de compatibilité + composition prompt |
+| `app/api/simulator/route.ts` | Route monolithique : vision → rules → rate-limit → prompt → génération |
 | `.env.example` | Documentation des variables d'env |

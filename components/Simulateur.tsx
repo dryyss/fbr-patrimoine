@@ -33,7 +33,9 @@ const styles: Style[] = [
 ];
 
 const MAX_SIZE = 8 * 1024 * 1024; // 8 MB
+const MAX_DESCRIPTION = 500;
 const LEAD_KEY = "fbr-sim-lead";
+const DESC_KEY = "fbr-sim-description";
 
 type Phase = "upload" | "style" | "generating" | "result" | "error";
 
@@ -70,11 +72,18 @@ export default function Simulateur() {
   const [rgpd, setRgpd] = useState(false);
   const [leadErr, setLeadErr] = useState<string>("");
 
+  // Free-form description of the renovation project, fed into the AI prompt
+  // and sent to FBR in the notification email so they have richer context
+  // before calling the prospect.
+  const [description, setDescription] = useState<string>("");
+
   // Pre-fill from sessionStorage so the form persists across reloads / step changes
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(LEAD_KEY);
       if (raw) setLead({ ...emptyLead, ...(JSON.parse(raw) as Partial<Lead>) });
+      const d = sessionStorage.getItem(DESC_KEY);
+      if (d) setDescription(d.slice(0, MAX_DESCRIPTION));
     } catch {
       // ignore
     }
@@ -142,6 +151,7 @@ export default function Simulateur() {
     if (!validateLead()) return;
 
     sessionStorage.setItem(LEAD_KEY, JSON.stringify(lead));
+    sessionStorage.setItem(DESC_KEY, description.trim());
     setPhase("generating");
     setError("");
 
@@ -149,6 +159,7 @@ export default function Simulateur() {
       const fd = new FormData();
       fd.append("image", file);
       fd.append("style", style);
+      fd.append("description", description.trim().slice(0, MAX_DESCRIPTION));
       fd.append("lead_prenom", lead.prenom.trim());
       fd.append("lead_nom", lead.nom.trim());
       fd.append("lead_email", lead.email.trim());
@@ -352,6 +363,29 @@ export default function Simulateur() {
                 <span className="sim-style-desc">{s.desc}</span>
               </button>
             ))}
+          </div>
+
+          <div className="sim-description">
+            <label htmlFor="sim-desc">
+              Précisions sur les travaux <span>(optionnel)</span>
+            </label>
+            <textarea
+              id="sim-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
+              maxLength={MAX_DESCRIPTION}
+              rows={4}
+              placeholder="Ex : on souhaite garder les volets en bois, accentuer la corniche, choisir un ton beige clair plutôt que blanc, traiter aussi le soubassement…"
+            />
+            <div className="sim-description-foot">
+              <small>
+                Notre IA utilisera ces précisions pour adapter le rendu. Notre
+                équipe en tiendra compte lors du diagnostic.
+              </small>
+              <small>
+                {description.length}/{MAX_DESCRIPTION}
+              </small>
+            </div>
           </div>
 
           <div className="sim-actions">

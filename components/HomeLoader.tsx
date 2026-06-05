@@ -54,7 +54,7 @@ export default function HomeLoader() {
             <div className="home-loader-mark-ring" aria-hidden />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/fbr-logo.svg"
+              src="/logo_mark.jpg"
               alt=""
               className="home-loader-mark"
               width={120}

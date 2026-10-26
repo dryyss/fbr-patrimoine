@@ -24,12 +24,11 @@ export default function HomePage() {
               <em>Bâtir l&apos;avenir.</em>
             </h1>
             <p>
-              <strong style={{ color: "#fff" }}>FBR Patrimoine</strong> — Société
-              Francilienne de Bâtiment et Réhabilitation. Maçonnerie générale,
-              ravalement de façades, ITE, restauration du bâti ancien et études
-              techniques. De la façade haussmannienne au clocher classé, de la
-              copropriété moderne à l&apos;isolation thermique extérieure —
-              l&apos;exigence du geste, au service de la pierre.
+              <strong style={{ color: "#fff" }}>FBR PATRIMOINE</strong>, société
+              francilienne de bâtiment et réhabilitation du patrimoine —
+              maçonnerie, restauration de bâti ancien et étude technique,
+              structure, ravalement, isolation thermique. Spécialiste des travaux
+              en copropriété.
             </p>
             <div className="hero-ctas">
               <Link href="/contact" className="btn-primary">
@@ -54,6 +53,7 @@ export default function HomePage() {
                 <option value="">Type de projet</option>
                 <option>Ravalement & ITE</option>
                 <option>Maçonnerie générale</option>
+                <option>Renforcement / structure bois & métal</option>
                 <option>Réhabilitation du patrimoine ancien</option>
                 <option>VRD, dalles, escaliers</option>
                 <option>Études techniques</option>
@@ -83,7 +83,7 @@ export default function HomePage() {
             <div>
               <div className="section-label">Nos expertises</div>
               <h2 className="section-title">
-                Quatre métiers, <em>une même exigence</em>.
+                Nos métiers, <em>une même exigence</em>.
               </h2>
             </div>
             <p className="section-intro">
@@ -120,8 +120,31 @@ export default function HomePage() {
               </ul>
             </Link>
 
+            <Link href="/expertises#structure" className="exp-card reveal">
+              <div className="exp-num">— 02 / Structure</div>
+              <div className="exp-icon">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M4 20V10l8-6 8 6v10M9 20v-6h6v6M12 4v6" />
+                </svg>
+              </div>
+              <h3 className="exp-title">
+                Renforcement
+                <br />
+                &amp; structure
+              </h3>
+              <p className="exp-desc">
+                Renforcement structurel et réparation des structures bois et
+                métalliques. Diagnostic, confortement et mise en sécurité du bâti.
+              </p>
+              <ul className="exp-features">
+                <li>Renforcement structure béton &amp; maçonnerie</li>
+                <li>Réparation structure bois</li>
+                <li>Réparation structure métallique</li>
+              </ul>
+            </Link>
+
             <Link href="/expertises#ravalement" className="exp-card reveal">
-              <div className="exp-num">— 02 / Ravalement & ITE</div>
+              <div className="exp-num">— 03 / Ravalement & ITE</div>
               <div className="exp-icon">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M4 4h16v16H4zM4 9h16M9 4v16M14 4v16" />
@@ -144,7 +167,7 @@ export default function HomePage() {
             </Link>
 
             <Link href="/expertises#patrimoine" className="exp-card reveal">
-              <div className="exp-num">— 03 / Patrimoine</div>
+              <div className="exp-num">— 04 / Patrimoine</div>
               <div className="exp-icon">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-8h6v8M9 8h6" />
@@ -166,33 +189,11 @@ export default function HomePage() {
               </ul>
             </Link>
 
-            <Link href="/expertises#vrd" className="exp-card reveal">
-              <div className="exp-num">— 04 / VRD & Aménagements</div>
-              <div className="exp-icon">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M3 18h18M3 6h18M9 6v12M15 6v12" />
-                </svg>
-              </div>
-              <h3 className="exp-title">
-                VRD, dalles,
-                <br />
-                escaliers, chapes
-              </h3>
-              <p className="exp-desc">
-                Voirie, réseaux divers, dalles béton, escaliers extérieurs, chapes
-                liquides. Les ouvrages techniques qui complètent vos chantiers.
-              </p>
-              <ul className="exp-features">
-                <li>Voirie & réseaux divers</li>
-                <li>Dalles béton & chapes liquides</li>
-                <li>Escaliers extérieurs, pavages</li>
-              </ul>
-            </Link>
           </div>
 
           <div style={{ textAlign: "center", marginTop: 60 }} className="reveal">
             <Link href="/expertises" className="btn-outline">
-              Voir nos 5 domaines d&apos;expertise (+ Études techniques)
+              Voir tous nos domaines d&apos;expertise (+ VRD &amp; Études techniques)
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -225,24 +226,25 @@ export default function HomePage() {
             <div className="about-text reveal">
               <div className="section-label">Le cabinet</div>
               <h2 className="section-title">
-                L&apos;expertise du <em>geste</em>, l&apos;exigence du <em>détail</em>.
+                Redonnons vie à votre <em>patrimoine</em>.
               </h2>
-              <p>
-                <strong>FBR Patrimoine</strong> — Société Francilienne de Bâtiment et
-                Réhabilitation — est une entreprise spécialisée dans la{" "}
-                <strong>maçonnerie générale</strong> et la{" "}
-                <strong>réhabilitation du patrimoine ancien</strong>. Fondée par
-                Hafedh Ghazouani, diplômé de{" "}
-                <strong>Polytechnique Hauts-de-France</strong>, elle est le fruit de
-                plusieurs années d&apos;expérience en bureau d&apos;études et sur le
-                terrain, notamment dans la maçonnerie traditionnelle et la restauration
-                du bâti ancien.
+              <p style={{ letterSpacing: "0.04em", textTransform: "uppercase", fontSize: 13, fontWeight: 600, color: "var(--orange-deep)", marginBottom: 18 }}>
+                Maçonnerie · Structure · Ravalement
               </p>
               <p>
-                Basés à <strong>Courdimanche (95)</strong>, nous accompagnons
-                particuliers, collectivités et entreprises avec sérieux et passion —
-                du clocher d&apos;église aux façades haussmanniennes parisiennes, en
-                passant par les copropriétés contemporaines.
+                Forte de <strong>20 années d&apos;expérience</strong> dans le secteur
+                du bâtiment, <strong>FBR Patrimoine</strong> met son savoir-faire et
+                son expertise au service de vos projets.
+              </p>
+              <p>
+                Spécialisés dans <strong>l&apos;étude, la préparation et le suivi
+                des travaux</strong>, nous vous accompagnons à chaque étape pour
+                garantir une réalisation maîtrisée, soignée et durable.
+              </p>
+              <p>
+                De la rénovation complète au <strong>ravalement de façade</strong>,
+                nous intervenons avec une exigence constante : un travail de qualité,
+                des finitions impeccables et des solutions adaptées à chaque bâtiment.
               </p>
 
               <div className="about-stats">
@@ -250,10 +252,10 @@ export default function HomePage() {
                   <div className="about-stat-num">
                     20<span>+</span>
                   </div>
-                  <div className="about-stat-label">Années d&apos;expérience du fondateur</div>
+                  <div className="about-stat-label">Années d&apos;expérience</div>
                 </div>
                 <div>
-                  <div className="about-stat-num">5</div>
+                  <div className="about-stat-num">6</div>
                   <div className="about-stat-label">Domaines d&apos;expertise</div>
                 </div>
                 <div>
@@ -293,11 +295,11 @@ export default function HomePage() {
 
           <div className="ba-home-single reveal">
             <BeforeAfterSlider
-              beforeSrc="/project3.jpg"
+              beforeSrc="/project5.jpg"
               afterSrc="/project6.jpg"
-              caption="Façade haussmannienne — ravalement à la chaux"
-              location="Paris 9ᵉ"
-              date="Livré en 2025"
+              caption="Ravalement de façade — du chantier au résultat"
+              location="Île-de-France"
+              date="Chantier FBR Patrimoine"
               workType="Ravalement & restauration"
               aspectRatio="16 / 9"
             />

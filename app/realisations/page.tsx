@@ -47,30 +47,30 @@ export default function RealisationsPage() {
               /public/ba-1-before.jpg + /public/ba-1-after.jpg */}
           <div className="ba-stack">
             <BeforeAfterSlider
-              beforeSrc="/project3.jpg"
+              beforeSrc="/project5.jpg"
               afterSrc="/project6.jpg"
-              caption="Façade haussmannienne — ravalement à la chaux"
-              location="Paris 9ᵉ"
-              date="Livré en 2025"
+              caption="Ravalement de façade — du chantier au résultat"
+              location="Île-de-France"
+              date="Chantier FBR Patrimoine"
               workType="Ravalement & restauration"
               aspectRatio="16 / 9"
             />
             <BeforeAfterSlider
-              beforeSrc="/project7.jpg"
-              afterSrc="/project2.jpg"
-              caption="Copropriété — isolation thermique par l'extérieur"
-              location="Cergy (95)"
-              date="Livré en 2024"
-              workType="ITE + finition enduit minéral"
+              beforeSrc="/project5.jpg"
+              afterSrc="/project4.jpg"
+              caption="Édifice religieux — restauration sous échafaudage"
+              location="Île-de-France"
+              date="Chantier FBR Patrimoine"
+              workType="Patrimoine religieux"
               aspectRatio="16 / 9"
             />
             <BeforeAfterSlider
-              beforeSrc="/project9.jpg"
-              afterSrc="/project4.jpg"
-              caption="Pavillon — reprise de façade & enduit traditionnel"
-              location="Val-d'Oise"
-              date="Livré en 2024"
-              workType="Maçonnerie & ravalement"
+              beforeSrc="/project7.jpg"
+              afterSrc="/project8.jpg"
+              caption="Cage d'escalier — restauration & finitions"
+              location="Île-de-France"
+              date="Chantier FBR Patrimoine"
+              workType="Parties communes"
               aspectRatio="16 / 9"
             />
           </div>

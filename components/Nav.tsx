@@ -69,7 +69,7 @@ export default function Nav() {
           <img src="/logo_mark.jpg" alt="" className="logo-img" />
           <div className="logo-text">
             <span className="name">FBR Patrimoine</span>
-            <span className="tag">Réhabilitation du patrimoine</span>
+            <span className="tag">Patrimoine</span>
           </div>
         </Link>
 

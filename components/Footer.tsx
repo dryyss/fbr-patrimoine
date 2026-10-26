@@ -12,21 +12,20 @@ export default function Footer() {
               src="/logo_mark.jpg"
               alt="FBR"
               className="logo-img"
-              style={{ height: 50, background: "white", padding: 4 }}
+              style={{ height: 68, background: "white", padding: 4 }}
             />
             <div className="logo-text">
               <span className="name">FBR Patrimoine</span>
-              <span className="tag">Réhabilitation du patrimoine</span>
+              <span className="tag">Patrimoine</span>
             </div>
           </Link>
           <p className="footer-desc">
-            Entreprise spécialisée en réhabilitation du patrimoine bâti :
-            ravalement, isolation thermique par l&apos;extérieur, maçonnerie
-            traditionnelle et peinture. Au service de la pierre depuis plus de
-            20 ans.
+            Société francilienne de bâtiment et réhabilitation du patrimoine —
+            maçonnerie, structure, ravalement, isolation thermique et
+            restauration de bâti ancien. Spécialiste des travaux en copropriété.
           </p>
           <div className="footer-legal">
-            FBR PATRIMOINE — Réhabilitation du patrimoine
+            FBR PATRIMOINE
             <br />
             7 Rue Joliot Curie, 95800 Courdimanche
             <br />
@@ -40,6 +39,7 @@ export default function Footer() {
           <h5>Expertises</h5>
           <ul>
             <li><Link href="/expertises#maconnerie">Maçonnerie générale</Link></li>
+            <li><Link href="/expertises#structure">Structure bois & métal</Link></li>
             <li><Link href="/expertises#ravalement">Ravalement & ITE</Link></li>
             <li><Link href="/expertises#patrimoine">Réhabilitation patrimoine</Link></li>
             <li><Link href="/expertises#vrd">VRD, dalles, escaliers</Link></li>

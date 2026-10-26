@@ -4,9 +4,9 @@ import PageHero from "@/components/PageHero";
 import CtaBlock from "@/components/CtaBlock";
 
 export const metadata: Metadata = {
-  title: "Nos expertises · Maçonnerie · Patrimoine · Ravalement · ITE · VRD · Études",
+  title: "Nos expertises · Maçonnerie · Structure · Ravalement · ITE · Patrimoine · VRD · Études",
   description:
-    "Cinq domaines d'expertise : maçonnerie générale, ravalement & ITE, réhabilitation du patrimoine bâti ancien, VRD/dalles/escaliers/chapes, et études techniques. Île-de-France, Qualibat RGE.",
+    "Six domaines d'expertise : maçonnerie générale, renforcement structure bois & métallique, ravalement & ITE, réhabilitation du patrimoine bâti ancien, VRD, et études techniques. Île-de-France, Qualibat RGE.",
   alternates: { canonical: "https://www.fbr-patrimoine.com/expertises" },
 };
 
@@ -61,11 +61,47 @@ const DETAILS: Detail[] = [
     ],
   },
   {
-    id: "ravalement",
+    id: "structure",
     bg: "var(--stone)",
     reverse: true,
     num: "02",
-    label: "02 — Ravalement & ITE",
+    label: "02 — Structure",
+    titleStart: "Renforcement structure & ",
+    titleEm: "réparation bois et métal",
+    body: (
+      <>
+        <p>
+          Le renforcement structurel et la réparation des structures bois et
+          métalliques font partie intégrante de notre savoir-faire. Nous
+          intervenons sur les planchers, charpentes, poteaux, poutres et
+          ossatures pour sécuriser, conforter et prolonger la durée de vie du
+          bâti — en particulier sur le patrimoine ancien et les copropriétés.
+        </p>
+        <p>
+          Après diagnostic, nous proposons des solutions adaptées : reprise
+          d&apos;appuis, renforts métalliques, traitement et réparation du bois,
+          consolidation de structure, mise en conformité. Chaque intervention
+          vise la pérennité et la sécurité, sans dénaturer le bâtiment.
+        </p>
+      </>
+    ),
+    img: "/project9.jpg",
+    imgAlt: "Renforcement et réparation de structure",
+    list: [
+      "Renforcement structure béton & maçonnerie",
+      "Réparation et traitement structure bois",
+      "Réparation structure métallique",
+      "Consolidation de planchers & charpentes",
+      "Reprises d'appuis & confortement",
+      "Diagnostic structurel préalable",
+    ],
+  },
+  {
+    id: "ravalement",
+    bg: "#fff",
+    reverse: false,
+    num: "03",
+    label: "03 — Ravalement & ITE",
     titleStart: "Ravalement de façades & ",
     titleEm: "ITE",
     body: (
@@ -99,9 +135,10 @@ const DETAILS: Detail[] = [
   },
   {
     id: "patrimoine",
-    bg: "#fff",
-    num: "03",
-    label: "03 — Patrimoine",
+    bg: "var(--stone)",
+    reverse: true,
+    num: "04",
+    label: "04 — Patrimoine",
     titleStart: "Réhabilitation & valorisation du ",
     titleEm: "patrimoine bâti ancien",
     body: (
@@ -135,10 +172,10 @@ const DETAILS: Detail[] = [
   },
   {
     id: "vrd",
-    bg: "var(--stone)",
-    reverse: true,
-    num: "04",
-    label: "04 — VRD & Aménagements",
+    bg: "#fff",
+    reverse: false,
+    num: "05",
+    label: "05 — VRD & Aménagements",
     titleStart: "VRD, dalles, escaliers, ",
     titleEm: "chapes",
     body: (
@@ -168,9 +205,10 @@ const DETAILS: Detail[] = [
   },
   {
     id: "etudes",
-    bg: "#fff",
-    num: "05",
-    label: "05 — Études",
+    bg: "var(--stone)",
+    reverse: true,
+    num: "06",
+    label: "06 — Études",
     titleStart: "Études techniques & ",
     titleEm: "accompagnement de projet",
     body: (
@@ -208,15 +246,15 @@ export default function ExpertisesPage() {
       <PageHero
         bgImage="/project9.jpg"
         breadcrumb="Nos expertises"
-        eyebrow="4 métiers · 1 exigence"
+        eyebrow="Maçonnerie · Structure · Ravalement"
         title={
           <>
-            Quatre métiers,
+            Nos métiers,
             <br />
             <em>une même exigence</em>.
           </>
         }
-        description="De la maçonnerie traditionnelle à l'isolation performante, nos équipes interviennent sur tous types de bâtiments — patrimoine ancien, copropriétés, édifices remarquables — avec le même souci du détail."
+        description="De la maçonnerie traditionnelle au renforcement structurel, du ravalement à l'isolation performante : nos équipes interviennent sur tous types de bâtiments — patrimoine ancien, copropriétés, édifices remarquables — avec le même souci du détail."
       />
 
       {DETAILS.map((d) => (

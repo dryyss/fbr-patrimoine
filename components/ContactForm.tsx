@@ -84,6 +84,7 @@ export default function ContactForm({ source = "contact", defaultProject = "" }:
         <option>Ravalement de façade</option>
         <option>Isolation thermique extérieure (ITE)</option>
         <option>Maçonnerie générale (gros œuvre, second œuvre)</option>
+        <option>Renforcement structure / réparation bois & métal</option>
         <option>Réhabilitation du patrimoine ancien</option>
         <option>Restauration d&apos;édifice religieux</option>
         <option>Cage d&apos;escalier / parties communes</option>

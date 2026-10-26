@@ -423,7 +423,7 @@ img { display: block; max-width: 100%; }
 .nav-inner {
   max-width: 1380px;
   margin: 0 auto;
-  padding: 18px 40px;
+  padding: 10px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -437,12 +437,12 @@ img { display: block; max-width: 100%; }
 }
 
 .logo-img {
-  height: 80px;
+  height: 104px;
   width: auto;
   transition: height 0.3s ease;
 }
 
-.site-nav.scrolled .logo-img { height: 64px; }
+.site-nav.scrolled .logo-img { height: 80px; }
 
 .logo-text {
   display: flex;
@@ -2470,8 +2470,8 @@ section { padding: 120px 40px; }
   .about-stats { grid-template-columns: 1fr; gap: 24px; }
   .certifs-cards { grid-template-columns: 1fr; }
   .logo-text .name { font-size: 19px; }
-  .logo-img { height: 58px; }
-  .site-nav.scrolled .logo-img { height: 50px; }
+  .logo-img { height: 72px; }
+  .site-nav.scrolled .logo-img { height: 60px; }
   .trust-inner { justify-content: center; text-align: center; }
 }
 

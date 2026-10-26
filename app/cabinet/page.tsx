@@ -22,7 +22,7 @@ export default function CabinetPage() {
             L&apos;expertise du <em>geste</em>,<br />l&apos;exigence du <em>détail</em>.
           </>
         }
-        description="FBR Patrimoine est née de la passion d'un homme pour la pierre, le bâti ancien et la transmission. Découvrez l'histoire, les valeurs et la méthode d'une entreprise qui place l'exigence artisanale au cœur de chaque chantier."
+        description="Redonnons vie à votre patrimoine. Maçonnerie · Structure · Ravalement. Forte de 20 années d'expérience, FBR Patrimoine met son savoir-faire au service de vos projets."
       />
 
       {/* FONDATEUR */}
@@ -47,34 +47,43 @@ export default function CabinetPage() {
             </div>
 
             <div className="about-text reveal">
-              <div className="section-label">Le fondateur</div>
+              <div className="section-label">FBR Patrimoine</div>
               <h2 className="section-title">
-                Hafedh <em>Ghazouani</em>.
+                Redonnons vie à votre <em>patrimoine</em>.
               </h2>
-              <p>
-                Diplômé de <strong>Polytechnique Hauts-de-France</strong>, Hafedh
-                Ghazouani a forgé sa rigueur technique au sein de bureaux d&apos;études
-                et sur le terrain, notamment dans le domaine de la maçonnerie
-                traditionnelle et de la restauration du bâti ancien. Confronté chaque
-                jour à des chantiers de grande envergure, il a progressivement développé
-                une conviction :{" "}
-                <strong>le patrimoine bâti mérite des artisans qui en comprennent l&apos;âme</strong>,
-                pas uniquement la technique.
+              <p style={{ letterSpacing: "0.04em", textTransform: "uppercase", fontSize: 13, fontWeight: 600, color: "var(--orange-deep)", marginBottom: 18 }}>
+                Maçonnerie · Structure · Ravalement
               </p>
               <p>
-                C&apos;est de cette conviction qu&apos;est née FBR Patrimoine. Fondée pour
-                mettre l&apos;exigence des grands ouvrages au service des particuliers,
-                copropriétés et collectivités, l&apos;entreprise associe la rigueur du
-                génie civil et le savoir-faire artisanal de la restauration patrimoniale.
+                Forte de <strong>20 années d&apos;expérience</strong> dans le secteur
+                du bâtiment, FBR Patrimoine met son savoir-faire et son expertise au
+                service de vos projets.
+              </p>
+              <p>
+                Spécialisés dans <strong>l&apos;étude, la préparation et le suivi
+                des travaux</strong>, nous vous accompagnons à chaque étape pour
+                garantir une réalisation maîtrisée, soignée et durable.
+              </p>
+              <p>
+                De la rénovation complète au <strong>ravalement de façade</strong>,
+                nous intervenons avec une exigence constante : un travail de qualité,
+                des finitions impeccables et des solutions adaptées à chaque bâtiment.
+              </p>
+              <p>
+                Fondée par Hafedh Ghazouani, diplômé de{" "}
+                <strong>Polytechnique Hauts-de-France</strong>, l&apos;entreprise
+                associe la rigueur du génie civil et le savoir-faire artisanal de la
+                restauration patrimoniale — au service des particuliers, copropriétés
+                et collectivités en Île-de-France.
               </p>
 
               <div className="about-stats">
                 <div>
                   <div className="about-stat-num">20<span>+</span></div>
-                  <div className="about-stat-label">Années d&apos;expérience du fondateur</div>
+                  <div className="about-stat-label">Années d&apos;expérience</div>
                 </div>
                 <div>
-                  <div className="about-stat-num">5</div>
+                  <div className="about-stat-num">6</div>
                   <div className="about-stat-label">Domaines d&apos;expertise</div>
                 </div>
                 <div>

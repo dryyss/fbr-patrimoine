@@ -77,8 +77,8 @@ export default function MentionsLegalesPage() {
             développeur fondateur.
             <br />
             Site web :{" "}
-            <a href="https://magar-dev.com" target="_blank" rel="noopener">
-              magar-dev.com
+            <a href="https://andrysmagar.fr" target="_blank" rel="noopener">
+              andrysmagar.fr
             </a>
           </p>
 

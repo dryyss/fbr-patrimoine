@@ -77,7 +77,7 @@ export default function Footer() {
         <div>© {new Date().getFullYear()} FBR Patrimoine. Tous droits réservés.</div>
 
         <a
-          href="https://andrysmagar.fr"
+          href="https://www.magar-developpement.fr/"
           target="_blank"
           rel="noopener"
           className="footer-credit"

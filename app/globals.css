@@ -146,8 +146,8 @@ body.loader-locked { overflow: hidden; }
 /* Monogramme FB (SVG transparent) */
 .home-loader-mark-wrap {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 148px;
+  height: 148px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -217,9 +217,9 @@ body.loader-locked { overflow: hidden; }
 .home-loader-claim-line {
   display: block;
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--orange);
   opacity: 0;

@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     images: ["/project6.jpg"],
   },
   icons: {
-    icon: "/logo_mark.jpg",
+    icon: "/logo_mark.png",
   },
   robots: { index: true, follow: true },
 };
@@ -71,7 +71,7 @@ const localBusinessJsonLd = {
   description:
     "Entreprise spécialisée en réhabilitation du patrimoine bâti, ravalement de façades, isolation thermique extérieure et maçonnerie traditionnelle.",
   url: "https://www.fbr-patrimoine.com",
-  logo: "https://www.fbr-patrimoine.com/logo_mark.jpg",
+  logo: "https://www.fbr-patrimoine.com/logo_mark.png",
   image: "https://www.fbr-patrimoine.com/project6.jpg",
   telephone: "+33763208753",
   email: "contact@fbr-patrimoine.com",

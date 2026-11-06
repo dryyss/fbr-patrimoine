@@ -66,9 +66,9 @@ export default function Nav() {
       <div className="nav-inner">
         <Link href="/" className="logo" aria-label="FBR Patrimoine — Accueil">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo_mark.jpg" alt="" className="logo-img" />
+          <img src="/logo_mark.png" alt="" className="logo-img" />
           <div className="logo-text">
-            <span className="name">FBR Patrimoine</span>
+            <span className="name">FBR</span>
             <span className="tag">Patrimoine</span>
           </div>
         </Link>

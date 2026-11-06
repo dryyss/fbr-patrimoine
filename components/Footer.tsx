@@ -9,13 +9,13 @@ export default function Footer() {
           <Link href="/" className="logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo_mark.jpg"
+              src="/logo_mark.png"
               alt="FBR"
               className="logo-img"
-              style={{ height: 68, background: "white", padding: 4 }}
+              style={{ height: 68 }}
             />
             <div className="logo-text">
-              <span className="name">FBR Patrimoine</span>
+              <span className="name">FBR</span>
               <span className="tag">Patrimoine</span>
             </div>
           </Link>

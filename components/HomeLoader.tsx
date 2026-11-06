@@ -54,17 +54,16 @@ export default function HomeLoader() {
             <div className="home-loader-mark-ring" aria-hidden />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo_mark.jpg"
+              src="/logo_mark.png"
               alt=""
               className="home-loader-mark"
-              width={120}
-              height={120}
+              width={140}
+              height={140}
             />
           </div>
 
           <p className="home-loader-claim">
-            <span className="home-loader-claim-line">Réhabilitation</span>
-            <span className="home-loader-claim-line">du patrimoine</span>
+            <span className="home-loader-claim-line">Patrimoine</span>
           </p>
         </div>
 
